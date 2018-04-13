@@ -129,7 +129,7 @@ class LabelTool():
             if len(files) > 0:
                 count = 1
                 self.imageDir = os.path.basename(rootDir)#os.path.join(r'./Images', '%03d' %(self.category))
-                print "Entering " + self.imageDir
+                print ("Entering " + self.imageDir)
                 self.imageList = self.imageList + files#glob.glob(os.path.join(root, '*.JPG'))
                 for i in range(0, len(files)):
                     self.imageClassList.insert(len(self.imageClassList), self.imageDir)
@@ -144,14 +144,14 @@ class LabelTool():
                     os.makedirs(self.outDir)
 
                 self.className = self.imageDir
-                print '%d images loaded from %s' %(self.total, self.imageDir)
+                print ('%d images loaded from %s' %(self.total, self.imageDir))
                 #root.wait_window()
                 #raw_input()
         self.loadImage()
 
     def loadImage(self):
         # load image
-        print "enter loadImage()"
+        print ("enter loadImage()")
         imagepath = self.imageList[self.cur - 1]
         imageClass = self.imageClassList[self.cur - 1]
         self.img = Image.open(self.work_path + '/../../../dataset/' + self.dataset_name + '/' + imageClass + '/' + imagepath)
@@ -188,7 +188,7 @@ class LabelTool():
             f.write('%d\n' %len(self.bboxList))
             for bbox in self.bboxList:
                 f.write(' '.join(map(str, bbox)) + '\n')
-        print 'Image No. %d saved' %(self.cur)
+        print ('Image No. %d saved' %(self.cur))
 
 
     def mouseClick(self, event):

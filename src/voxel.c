@@ -1,16 +1,4 @@
-#include "network.h"
-#include "cost_layer.h"
-#include "utils.h"
-#include "parser.h"
-
-#ifdef OPENCV
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/core/version.hpp"
-#ifndef CV_VERSION_EPOCH
-#include "opencv2/videoio/videoio_c.h"
-#endif
-image get_image_from_stream(CvCapture *cap);
-#endif
+#include "darknet.h"
 
 void extract_voxel(char *lfile, char *rfile, char *prefix)
 {
@@ -56,7 +44,7 @@ void train_voxel(char *cfgfile, char *weightfile)
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     float avg_loss = -1;
-    network net = parse_network_cfg(cfgfile);
+    network net = *parse_network_cfg(cfgfile);
     if(weightfile){
         load_weights(&net, weightfile);
     }
@@ -83,7 +71,7 @@ void train_voxel(char *cfgfile, char *weightfile)
     pthread_t load_thread = load_data_in_thread(args);
     clock_t time;
     //while(i*imgs < N*120){
-    while(get_current_batch(net) < net.max_batches){
+    while(get_current_batch(&net) < net.max_batches){
         i += 1;
         time=clock();
         pthread_join(load_thread, 0);
@@ -93,31 +81,31 @@ void train_voxel(char *cfgfile, char *weightfile)
         printf("Loaded: %lf seconds\n", sec(clock()-time));
 
         time=clock();
-        float loss = train_network(net, train);
+        float loss = train_network(&net, train);
         if (avg_loss < 0) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
 
-        printf("%d: %f, %f avg, %f rate, %lf seconds, %d images\n", i, loss, avg_loss, get_current_rate(net), sec(clock()-time), i*imgs);
+        printf("%d: %f, %f avg, %f rate, %lf seconds, %d images\n", i, loss, avg_loss, get_current_rate(&net), sec(clock()-time), i*imgs);
         if(i%1000==0){
             char buff[256];
             sprintf(buff, "%s/%s_%d.weights", backup_directory, base, i);
-            save_weights(net, buff);
+            save_weights(&net, buff);
         }
         if(i%100==0){
             char buff[256];
             sprintf(buff, "%s/%s.backup", backup_directory, base);
-            save_weights(net, buff);
+            save_weights(&net, buff);
         }
         free_data(train);
     }
     char buff[256];
     sprintf(buff, "%s/%s_final.weights", backup_directory, base);
-    save_weights(net, buff);
+    save_weights(&net, buff);
 }
 
 void test_voxel(char *cfgfile, char *weightfile, char *filename)
 {
-    network net = parse_network_cfg(cfgfile);
+    network net = *parse_network_cfg(cfgfile);
     if(weightfile){
         load_weights(&net, weightfile);
     }
@@ -143,8 +131,8 @@ void test_voxel(char *cfgfile, char *weightfile, char *filename)
 
         float *X = im.data;
         time=clock();
-        network_predict(net, X);
-        image out = get_network_image(net);
+        network_predict(&net, X);
+        image out = get_network_image(&net);
         printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
         save_image(out, "out");
 
